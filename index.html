@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset='utf-8'>
+        <style>
+            .counties {
+                fill: #000;
+                stroke: #fff;
+            }
+
+            .states {
+                fill: none;
+                stroke: #000;
+                stroke-linejoin: round;
+            }
+            
+            #diagram {
+                display: flex;
+                flex-flow: column;
+            }
+        </style>
+        <script src="https://d3js.org/d3.v4.min.js"></script>
+        <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+        <script src="https://d3js.org/topojson.v2.min.js"></script>
+    </head>
+    <body>
+        <div id='diagram'>
+            <svg width="960" height="150" id='map-header'></svg>
+            <svg width="960" height="600" id='map'></svg>
+        </div>
+    </body>
+    <script>
+        var mapsvg = d3.select('#map'),
+            mapWidth = mapsvg.attr('width'),
+            mapHeight = mapsvg.attr('height');
+
+        var usa = d3.map();
+
+        var path = d3.geoPath();
+
+        d3.queue()
+            .defer(d3.json, 'https://d3js.org/us-10m.v1.json')
+            .await(ready);
+
+        function ready(err, us) {
+            mapsvg.append('g')
+                .attr('class', 'counties')
+               .selectAll('path')
+               .data(topojson.feature(us, us.objects.counties).features)
+               .enter().append('path')
+                .attr('d', path)
+              .append('title')
+                .text(function(d) { return d.rate + "%"; });
+            
+            mapsvg.append('path')
+                .datum(topojson.mesh(us, us.objects.states, function(a, b) { return a !== b; }))
+                .attr('class', 'states')
+                .attr('d', path);
+        }
+    </script>
+    <script>
+        var legendsvg = d3.select("#map-header");
+        var width = legendsvg.attr('width');
+        var height = legendsvg.attr('height');
+
+        var gradientSquare =
+        legendsvg
+            .append('rect')
+            .attr('transform', `translate(${mapWidth - 100}, 0) rotate(45)`)
+            .attr('width', 100)
+            .attr('height', 100)
+    </script>
+</html>

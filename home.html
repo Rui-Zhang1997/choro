@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<meta charset='utf-8'>
+<style>
+    .counties {
+        fill: #000;
+        stroke: #fff;
+    }
+
+    .states {
+        fill: none;
+        stroke: #000;
+        stroke-linejoin: round;
+    }
+</style>
+
+<svg width="960" height="600"></svg>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+<script src="https://d3js.org/topojson.v2.min.js"></script>
+
+<script>
+
+var svg = d3.select('svg'),
+    width = svg.attr('width'),
+    height = svg.attr('height');
+
+var usa = d3.map();
+
+var path = d3.geoPath();
+
+var color = d3.scaleThreshold()
+    .domain(d3.range(2, 10))
+    .range(d3.schemeBlues[9]);
+
+var rect = svg.append('rect')
+               .attr('width', 20)
+               .attr('height', 20)
+               .attr('fill', 'blue')
+               .attr('transform', 'rotate(45)');
+
+d3.queue()
+    .defer(d3.json, 'https://d3js.org/us-10m.v1.json')
+    .defer(d3.tsv, 'unemployment.tsv', function(d) { usa.set(d.id, d.rate); })
+    .await(ready);
+
+function ready(err, us) {
+    console.log("READY");
+    svg.append('g')
+        .attr('class', 'counties')
+        .attr('transform', 'scale(0.25) translate(100,100)')
+       .selectAll('path')
+       .data(topojson.feature(us, us.objects.counties).features)
+       .enter().append('path')
+        .attr('fill', function(d) { return color(d.rate = usa.get(d.id)); })
+        .attr('d', path)
+      .append('title')
+        .text(function(d) { return d.rate + "%"; });
+    
+    svg.append('path')
+        .datum(topojson.mesh(us, us.objects.states, function(a, b) { return a !== b; }))
+        .attr('class', 'states')
+        .attr('transform', 'scale(0.25) translate(100,100)')
+        .attr('d', path);
+}
+</script>
+
+
